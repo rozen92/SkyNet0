@@ -1,9 +1,9 @@
 === Résultats Optuna - Modèle 3 (Sine) ===
-Best CV MSE Loss : 1.076630
-Temps Optuna     : 3.7s
+Best CV MSE Loss : 0.114252
+Temps Optuna     : 2m 18s
 ----------------------------------------
-n_layers            : 3
-n_units             : 141
-dropout_rate        : 0.07825727585604468
-lr                  : 0.003943693172038148
+n_layers            : 5
+n_units             : 209
+dropout_rate        : 0.029832532357208112
+lr                  : 0.00014447711614120544
 activation          : Sine

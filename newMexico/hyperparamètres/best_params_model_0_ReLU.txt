@@ -1,9 +1,9 @@
 === Résultats Optuna - Modèle 0 (ReLU) ===
-Best CV MSE Loss : 0.055788
-Temps Optuna     : 55.4s
+Best CV MSE Loss : 0.035124
+Temps Optuna     : 2m 21s
 ----------------------------------------
-n_layers            : 7
-n_units             : 335
-dropout_rate        : 0.048360274037927864
-lr                  : 0.0010282214794731703
+n_layers            : 4
+n_units             : 306
+dropout_rate        : 0.006286768878411262
+lr                  : 0.0026437184591733454
 activation          : ReLU

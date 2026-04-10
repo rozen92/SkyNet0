@@ -1,9 +1,9 @@
 === Résultats Optuna - Modèle 2 (Tanh) ===
-Best CV MSE Loss : 0.002136
-Temps Optuna     : 2.9s
+Best CV MSE Loss : 0.000339
+Temps Optuna     : 1m 51s
 ----------------------------------------
 n_layers            : 4
-n_units             : 262
-dropout_rate        : 0.07306488478552713
-lr                  : 0.0005311644864205593
+n_units             : 330
+dropout_rate        : 0.0002573556464304441
+lr                  : 0.0017511373522743196
 activation          : Tanh
