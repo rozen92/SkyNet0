@@ -20,6 +20,10 @@ def plot_and_save(data_ctx, Y_all_pred, rmse_dict, hist, best_cv_loss, test_l_sc
     Fn_data, Ft_data = forces_data[0], forces_data[1]
     Veff_data, Alpha_data = forces_data[2], forces_data[3]
 
+    # --- AJOUT : Extraction dynamique des dimensions ---
+    N_theta = len(azimuth_angles)
+    N_r = len(r_centers_norm)
+
     n_rows = 3 if is_hybrid else 2
     fig = plt.figure(figsize=(16, 5 * n_rows))
     plt.subplots_adjust(hspace=0.45)
@@ -41,7 +45,9 @@ def plot_and_save(data_ctx, Y_all_pred, rmse_dict, hist, best_cv_loss, test_l_sc
         ax_loss.axis('off')
 
     # 2. Légende Globale Commune (En haut à droite)
-    sections = np.linspace(0, 33, 7, dtype=int)
+    # MODIFICATION optionnelle : on s'assure que 33 ne dépasse pas la taille du tableau si la pale a moins de sections
+    sections = np.linspace(0, N_r - 1, 7, dtype=int) 
+    
     method_proxies = [Line2D([0], [0], color='black', lw=2, label='Prédiction Modèle'),
                       Line2D([0], [0], marker='o', color='w', markerfacecolor='gray', alpha=0.3, label='SVEN Entraînement'),
                       Line2D([0], [0], marker='*', color='w', markerfacecolor='red', markeredgecolor='black', label='SVEN Test')]
@@ -52,13 +58,13 @@ def plot_and_save(data_ctx, Y_all_pred, rmse_dict, hist, best_cv_loss, test_l_sc
 
     # 3. Préparation des grilles de prédiction (remaniement des tenseurs)
     if is_hybrid:
-        V_grid = Y_all_pred[:, 0].reshape(72, 34) if not is_global else Y_all_pred[:, :34]
-        A_grid = np.degrees(Y_all_pred[:, 1].reshape(72, 34)) if not is_global else np.degrees(Y_all_pred[:, 34:])
+        V_grid = Y_all_pred[:, 0].reshape(N_theta, N_r) if not is_global else Y_all_pred[:, :N_r]
+        A_grid = Y_all_pred[:, 1].reshape(N_theta, N_r) if not is_global else Y_all_pred[:, N_r:]
         Fn_grid = forces_data[0]*(V_grid/forces_data[2])**2
         Ft_grid = forces_data[1]*(V_grid/forces_data[2])**2
     else:
-        Fn_grid = Y_all_pred[:,0].reshape(72,34) if not is_global else Y_all_pred[:, :34]
-        Ft_grid = Y_all_pred[:,1].reshape(72,34) if not is_global else Y_all_pred[:, 34:]
+        Fn_grid = Y_all_pred[:,0].reshape(N_theta, N_r) if not is_global else Y_all_pred[:, :N_r]
+        Ft_grid = Y_all_pred[:,1].reshape(N_theta, N_r) if not is_global else Y_all_pred[:, N_r:]
 
     axes_map = {'Fn': (n_rows, 2, 3), 'Ft': (n_rows, 2, 4), 'Veff': (n_rows, 2, 5), 'Alpha': (n_rows, 2, 6)}
     
@@ -95,13 +101,14 @@ def plot_and_save(data_ctx, Y_all_pred, rmse_dict, hist, best_cv_loss, test_l_sc
                 if key == 'Fn': tr_val, te_val = Yf_train_full[m_tr, 0], Yf_test[m_te, 0]
                 elif key == 'Ft': tr_val, te_val = Yf_train_full[m_tr, 1], Yf_test[m_te, 1]
                 elif key == 'Veff': tr_val, te_val = Y_train_full[m_tr, 0], Y_test[m_te, 0]
-                elif key == 'Alpha': tr_val, te_val = np.degrees(Y_train_full[m_tr, 1]), np.degrees(Y_test[m_te, 1])
+                elif key == 'Alpha': tr_val, te_val = Y_train_full[m_tr, 1], Y_test[m_te, 1]
             else:
                 tr_a, te_a = tr_ang, te_ang
+
                 if key == 'Fn': tr_val, te_val = Yf_train_full[:, s], Yf_test[:, s]
-                elif key == 'Ft': tr_val, te_val = Yf_train_full[:, s+34], Yf_test[:, s+34]
+                elif key == 'Ft': tr_val, te_val = Yf_train_full[:, s+N_r], Yf_test[:, s+N_r]
                 elif key == 'Veff': tr_val, te_val = Y_train_full[:, s], Y_test[:, s]
-                elif key == 'Alpha': tr_val, te_val = np.degrees(Y_train_full[:, s+34]), np.degrees(Y_test[:, s+34])
+                elif key == 'Alpha': tr_val, te_val = Y_train_full[:, s+N_r], Y_test[:, s+N_r]
 
             # Tracé des points d'entraînement (ronds) et de test (étoiles)
             ax.scatter(tr_a, tr_val, marker='o', s=20, color=col, alpha=0.3)
@@ -192,8 +199,8 @@ def compute_metrics_and_plot(data_ctx, Y_p_test, Y_all_pred, model_type, title_p
         rmse_dict['Veff']['val'] = np.sqrt(np.mean((Vt - Vp)**2))
         rmse_dict['Veff']['err'] = (rmse_dict['Veff']['val'] / np.mean(np.abs(Vt)))*100
         
-        rmse_dict['Alpha']['val'] = np.sqrt(np.mean((np.degrees(At - Ap))**2))
-        rmse_dict['Alpha']['err'] = (rmse_dict['Alpha']['val'] / np.mean(np.abs(np.degrees(At))))*100
+        rmse_dict['Alpha']['val'] = np.sqrt(np.mean((At - Ap)**2))
+        rmse_dict['Alpha']['err'] = (rmse_dict['Alpha']['val'] / np.mean(np.abs(At)))*100
     else:
         Fn_p_test, Ft_p_test = (Y_p_test[:, 0], Y_p_test[:, 1]) if not is_global else (Y_p_test[:, :34], Y_p_test[:, 34:])
         Fn_tr, Ft_tr = (Yf_test[:, 0], Yf_test[:, 1]) if not is_global else (Yf_test[:, :34], Yf_test[:, 34:])

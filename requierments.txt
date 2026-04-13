@@ -4,3 +4,4 @@ matplotlib
 optuna
 scikit-learn
 pandas
+openpyxl

@@ -4,25 +4,47 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import time
+import pandas as pd
 
 def load_base_data():
-    """Charge les tenseurs avec un chemin relatif absolu (Compatible GitHub/Colab)."""
+    """Charge les données à partir du fichier Excel pour un TSR et yaw spécifiques."""
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    dataset_path = os.path.join(current_dir, 'dataset_forces_mexico.pt')
-    geom_path = os.path.join(current_dir, 'geometry', 'mexico.blade')
+    
+    dataset_path = os.path.join(current_dir, 'dataset_forces_mexico.xlsx')
 
     if not os.path.exists(dataset_path):
         raise FileNotFoundError(f"Fichier introuvable : {dataset_path}")
 
-    forces_tensor = torch.load(dataset_path)
-    forces_data = forces_tensor.squeeze(0).squeeze(0).numpy()
+    # Lecture du fichier Excel
+    print("Chargement du fichier Excel...")
+    df = pd.read_excel(dataset_path)
 
-    data_geom = np.genfromtxt(geom_path, skip_header=1)
-    nodesRadius = 0.210 + data_geom[:, 2]
-    r_centers_norm = (0.5 * (nodesRadius[1:] + nodesRadius[:-1])) / nodesRadius.max()
-    
-    azimuth_angles = np.arange(0, 360, 5)
+    # 1. Filtrage du point de fonctionnement souhaité
+    yaw_target = 15.0
+    tsr_target = 8.0
+    df_filtered = df[(df['yaw'] == yaw_target) & (df['TSR'] == tsr_target)].copy()
+
+    if df_filtered.empty:
+        raise ValueError(f"Aucune donnée trouvée pour yaw={yaw_target} et TSR={tsr_target}")
+
+    # 2. Extraction des vecteurs uniques
+    unique_r = np.sort(df_filtered['r'].unique())
+    azimuth_angles = np.sort(df_filtered['theta'].unique())
     theta_rad = np.radians(azimuth_angles)
+
+    # Normalisation du rayon r 
+    r_centers_norm = unique_r / unique_r.max()
+
+    # 3. Création des matrices 2D avec .pivot()
+    # On pivote le tableau pour avoir theta en lignes et r en colonnes
+    Fn_data = df_filtered.pivot(index='theta', columns='r', values='Fn').values
+    Ft_data = df_filtered.pivot(index='theta', columns='r', values='Ft').values
+    Veff_data = df_filtered.pivot(index='theta', columns='r', values='V_eff').values
+    Alpha_data = df_filtered.pivot(index='theta', columns='r', values='alpha').values
+
+    # 4. la matrice forces_data
+
+    forces_data = np.stack([Fn_data, Ft_data, Veff_data, Alpha_data], axis=0)
 
     return forces_data, r_centers_norm, azimuth_angles, theta_rad
 
