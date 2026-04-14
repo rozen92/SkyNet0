@@ -6,21 +6,36 @@ Contrairement aux autres modèles de la lignée SkyNet qui sont "informés" par 
 
 ---
 
-## Données : `dataset_forces_mexico.pt`
+## Données : `dataset_forces_mexico.xlsx`
 
-Le fichier `dataset_forces_mexico.pt` est un tenseur PyTorch contenant les données extraites des simulations SVEN pour l'expérience **New Mexico**. 
+Le fichier `dataset_forces_mexico.xlsx` regroupe les données extraites des simulations SVEN pour l'expérience **New Mexico**. 
 
-Ce jeu de données est focalisé sur un point de fonctionnement spécifique :
-* **Yaw :** 30°.
-* **TSR (Tip Speed Ratio) :** 12.
+### 1. Points de fonctionnement inclus
+Le jeu de données couvre une matrice de conditions opérationnelles permettant d'étudier l'impact du lacet et de la charge :
+* **Yaw (Lacet) :** 15° et 30°.
+* **TSR (Tip Speed Ratio) :** 4, 8 et 12.
 
-Le tenseur contient 4 grandeurs physiques réparties sur **34 sections** de pale et **72 angles azimutaux** (échantillonnage tous les 5°) :
-1.  **$F_n$** : Force normale.
-2.  **$F_t$** : Force tangentielle.
-3.  **$V_{eff}$** : Vitesse effective vue par le profil.
-4.  **$\alpha$** : Angle d'attaque.
+### 2. Discrétisation Spatiale et Temporelle
+* **Rayon ($r$) :** 34 sections discrétisées le long de la pale (du moyeu au bout de pale).
+* **Azimut ($\theta$) :** 36 points (échantillonnage tous les 10°, de 0° à 350°).
 
----
+### 3. Structure du fichier (Colonnes)
+Chaque ligne représente un point de calcul $(r, \theta)$ pour un couple (Yaw, TSR) donné :
+
+| Colonne | Description | Unité |
+| :--- | :--- | :--- |
+| `r` | Position radiale locale | [m] |
+| `theta` | Angle azimutal (0° à 9H, sens horaire) | [°] |
+| `yaw` | Angle de lacet de la turbine | [°] |
+| `TSR` | Ratio de vitesse en bout de pale | [-] |
+| `Fn` | Force normale  | [N/m] |
+| `Ft` | Force tangentielle | [N/m] |
+| `V_eff` | Vitesse effective vue par le profil | [m/s] |
+| `alpha` | Angle d'attaque local | [°] |
+| `err_period_n` | Amplitude des fluctuations de $F_n$ sur un tour | [N/m] |
+| `err_period_t` | Amplitude des fluctuations de $F_t$ sur un tour | [N/m] |
+
+> **Note technique :** Le code `SkyNet0` filtre ces données via `utils.py` pour s'entraîner par défaut sur le point de fonctionnement **Yaw 15° / TSR 8**.
 
 ## Les Différents Modèles
 
@@ -41,7 +56,7 @@ Le script permet de tester quatre architectures distinctes pour comparer l'effic
 Le projet utilise **Optuna** pour automatiser la recherche des meilleures configurations. Pour chaque modèle et chaque fonction d'activation (**ReLU, Tanh, Sine**), une **validation croisée (K-Fold)** est effectuée pour optimiser le nombre de couches, d'unités, le taux de Dropout et le Learning Rate.
 
 ### Interpolateur Baseline
-Afin de juger de la performance de l'IA, le script génère systématiquement une **baseline par interpolation linéaire** (`LinearNDInterpolator`). Cela permet de vérifier si le MLP apporte une réelle valeur ajoutée par rapport à une méthode mathématique classique.
+Afin de juger de la performance de l'IA, le script génère systématiquement une **baseline par interpolation linéaire** (`LinearNDInterpolator`). Cela permet de vérifier si le MLP apporte une réelle valeur ajoutée par rapport à une méthode mathématique basique.
 
 ---
 

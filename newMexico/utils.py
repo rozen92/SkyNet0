@@ -72,7 +72,7 @@ def prepare_model_data(model_type):
 
     Y_target = Y_a if is_hybrid else Y_f
     X_train_full, X_test, Y_train_full, Y_test, Yf_train_full, Yf_test = train_test_split(
-        X, Y_target, Y_f, test_size=0.15, random_state=42)
+        X, Y_target, Y_f, test_size=0.3, random_state=42)
 
     scaler_Y = StandardScaler()
     Y_train_full_scaled = scaler_Y.fit_transform(Y_train_full)
